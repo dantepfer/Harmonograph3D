@@ -9,40 +9,52 @@ float rotIncr = .1;
 PVector camDir, camPos; 
 float camRotY=-PI; //camera azimuth angle
 float camRotX=0; //camera elevation angle
+float rotationSpeed = 0.01;
+int shouldRotate = 0;
 
-float rotTheta=10;
+float rotThetaY=10;
+float rotThetaX=0;
 
 float baseFreq = 440.0;
-
-CheckBox checkBox;
 
 float theta1 = 0;  
 float theta2 = 0;
 float theta3 = 0;
-public float theta1Incr = .1;
-public float theta2Incr = .15;
-public float theta3Incr = .2;
-public int iterations = 20;
+public float theta1Incr = 4;
+public float theta2Incr = 5;
+public float theta3Incr = 6;
+float thetaScaleFactor = 0.005;
+public int iterations = 35000;
+int detuneB = 0;
+int detuneC = 0;
+float detuneAmountPerFrame2 = 0.00001;
+float detuneAmountPerFrame3 = -0.00001;
+float mouseDeltaX=0;
+float mouseDeltaY=0;
 
-int scaleFactor = 100;
+int scaleFactor = 1;
+int scaleFactor2 = 400;
 PFont myFont;
+CheckBox checkBox;
 
 SinOsc[] sine = new SinOsc[3];
 
 void setup() {
-  //size(1400, 800, P3D); 
+  //size(1400, 800, P3D);
   fullScreen(P3D);
   pixelDensity(2);
+  smooth();
   camDir = new PVector(0,0,-1);
-  camPos = new PVector(width/2,height/2,1000);
-  myFont = createFont("Georgia", 15); 
+  camPos = new PVector(width/2,height/2,1200);
+  myFont = createFont("Serif-15",15); 
   
   
   cp5 = new ControlP5(this);
+  cp5.setAutoDraw(false);
   
- cp5.addSlider("theta1Incr")
+  cp5.addSlider("theta1Incr")
     .setPosition(20,50)
-    .setRange(.1,2)
+    .setRange(1,20)
     .setSize(20,300)
     .setNumberOfTickMarks(20)
     .showTickMarks(false)
@@ -52,7 +64,7 @@ void setup() {
   
     cp5.addSlider("theta2Incr")
      .setPosition(50,50)
-     .setRange(.1,2)
+     .setRange(1,20)
      .setSize(20,300)
      .setNumberOfTickMarks(20)
      .showTickMarks(false)
@@ -62,7 +74,7 @@ void setup() {
   
     cp5.addSlider("theta3Incr")
      .setPosition(80,50)
-     .setRange(.1,2)
+     .setRange(1,20)
      .setSize(20,300)
      .setNumberOfTickMarks(20)
      .showTickMarks(false)
@@ -70,13 +82,6 @@ void setup() {
      .setCaptionLabel("   c") 
   ;
   
-    cp5.addSlider("iterations")
-     .setPosition(width-50,50)
-     .setRange(1,50000)
-     .setSize(20, height -100)
-  ;
-
-
 checkBox = cp5.addCheckBox("checkBox")
                 .setPosition(20, 400)
                 .setSize(20, 20)
@@ -89,44 +94,16 @@ checkBox = cp5.addCheckBox("checkBox")
                 .setColorLabels(0)
        ;
        
-       //if(shouldRotate==1){
-       //  checkBox.toggle(0);
-       //}
+       if(shouldRotate==1){
+         checkBox.toggle(0);
+       }
          
-  
-  //controlP5 = new ControlP5(this);
-  // controlP5.setAutoDraw(false);
-  //controlWindow = controlP5.addControlWindow("controlP5window",100,100,1000,200);
-  //controlWindow.hideCoordinates();
-  
-  //controlWindow.setBackground(color(40));
-  //controlP5.Controller mySlider1 = controlP5.addSlider("theta1Incr",.01,.2,40,40,800,10);
-  //controlP5.Controller mySlider2 = controlP5.addSlider("theta2Incr",.01,.2,40,60,800,10);
-  //controlP5.Controller mySlider3 = controlP5.addSlider("theta3Incr",.01,.2,40,80,800,10);
-  //controlP5.Controller mySlider4 = controlP5.addSlider("iterations",2000,50000,40,100,800,10);
-  
-  //Textfield field1 = controlP5.addTextfield("field1",900,40,40,20);
-  //Textfield field2 = controlP5.addTextfield("field2",900,60,40,20);
-  //Textfield field3 = controlP5.addTextfield("field3",900,80,40,20);
-  
-  //mycheckbox = controlP5.addCheckBox("checkBox",40,120);
-  //mycheckbox.addItem("RotX",1);
-  //mycheckbox.addItem("RotY",1);
-  //mycheckbox.addItem("RotZ",1);
-  
-  //mycheckbox.moveTo(controlWindow);
-  
-  //mySlider1.setWindow(controlWindow);
-  //mySlider2.setWindow(controlWindow);
-  //mySlider3.setWindow(controlWindow);
-  //field1.setWindow(controlWindow);
-  //field2.setWindow(controlWindow);
-  //field3.setWindow(controlWindow);
-  //mySlider4.setWindow(controlWindow);
-  
-  //field1.setAutoClear(false);
-  //field2.setAutoClear(false);
-  //field3.setAutoClear(false);
+
+  cp5.addSlider("iterations")
+     .setPosition(width-50,50)
+     .setRange(1,50000)
+     .setSize(20, height -100)
+  ;
      
   for (int i = 0; i<3; i++){
      sine[i] = new SinOsc(this);
@@ -135,7 +112,7 @@ checkBox = cp5.addCheckBox("checkBox")
   sine[1].set(baseFreq*theta2Incr/theta1Incr, 0.5, 0, 0.5);
   sine[2].set(baseFreq*theta3Incr/theta1Incr, 0.5, 0, 0.5);
   
-  for (int i = 0; i<3; i++){
+    for (int i = 0; i<3; i++){
      sine[i].play();
   }
   
@@ -151,51 +128,48 @@ void draw() {
   background(255);
   stroke(0);
   
-  theta3Incr -= .000015;
-//  theta2Incr += .0000005;
-  
-  
+  if(detuneB==1){
+    theta2Incr += detuneAmountPerFrame2;
+  }
+    if(detuneC==1){
+    theta3Incr += detuneAmountPerFrame3;
+  }
+   
    checkCameraInput();
    camera(camPos.x, camPos.y, camPos.z, // eyeX, eyeY, eyeZ
          camPos.x+camDir.x,camPos.y+camDir.y,camPos.z+camDir.z, // centerX, centerY, centerZ
          0.0, 1.0, 0.0); // upX, upY, upZ
          
-  translate (width/2, height/2, 0);
-  scale (scaleFactor);
-         
-  rotateY(rotTheta);
-  
-  if (keyPressed && key == 'r'){
+  translate(width/2, height/2, 0);
+   scale (scaleFactor);
+            
+  decrementRotation();
+  rotThetaY += mouseDeltaX/100.0;
+  rotThetaX -= mouseDeltaY/100.0;
+            
+  if (shouldRotate==1){
+    rotThetaY += rotationSpeed;
   }
-  else{
-    rotTheta = rotTheta+.01;
-  }
   
-  
+  rotateX(rotThetaX);
+  rotateY(rotThetaY);
+
     for (int i=0; i<iterations; i++){
- //if (mycheckbox.arrayValue()[0] == 1) {rotateX(theta1Incr/16);}
- //if (mycheckbox.arrayValue()[1] == 1) {rotateY(theta1Incr/16);}
- //if (mycheckbox.arrayValue()[2] == 1) {rotateZ(theta1Incr/16);}
- //scale(.999999);
  strokeWeight(2);
-    line(sin(theta1+i*theta1Incr), cos(theta2+i*theta2Incr), cos(theta3+i*theta3Incr), sin(theta1+(i+1)*theta1Incr), cos(theta2+(i+1)*theta2Incr), cos(theta3+(i+1)*theta3Incr));
+    line(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+i*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+i*theta3Incr*thetaScaleFactor)*scaleFactor,
+    sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(i+1)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(i+1)*theta3Incr*thetaScaleFactor)*scaleFactor);
   }
   
-  camera();
+  camera(); //anthing after this is rendered in 2D
   
   textFont(myFont); 
   fill(0);
-  textMode(MODEL);
   text("a:"+str(theta1Incr)+"    b:"+str(theta2Incr)+"    c:"+str(theta3Incr),20,20);
   
-
-  
-
   cp5.draw();
   
-  sine[0].freq(baseFreq);
-    sine[1].freq(baseFreq*theta2Incr/theta1Incr);
-    sine[2].freq(baseFreq*theta3Incr/theta1Incr);
+  sine[1].freq(baseFreq*theta2Incr/theta1Incr);
+  sine[2].freq(baseFreq*theta3Incr/theta1Incr);
 
 
 }
@@ -203,18 +177,18 @@ void draw() {
 
 void checkCameraInput() {
 if (keyPressed) {
-    if (keyCode == LEFT) {
-      camRotY = camRotY + rotIncr;
-    } 
-    if (keyCode == RIGHT) {
-      camRotY = camRotY - rotIncr;
-    } 
-    if (keyCode == UP) {
-      camRotX = camRotX - rotIncr;
-    } 
-    if (keyCode == DOWN) {
-      camRotX = camRotX + rotIncr;
-    } 
+    //if (keyCode == LEFT) {
+    //  camRotY = camRotY + rotIncr;
+    //} 
+    //if (keyCode == RIGHT) {
+    //  camRotY = camRotY - rotIncr;
+    //} 
+    //if (keyCode == UP) {
+    //  camRotX = camRotX - rotIncr;
+    //} 
+    //if (keyCode == DOWN) {
+    //  camRotX = camRotX + rotIncr;
+    //} 
     if (key == 'a') {
       camDir.mult(camSpeed);
       camPos.add(camDir);
@@ -229,27 +203,38 @@ if (keyPressed) {
 }
 
 
+void mouseDragged(){
+  if((mouseX > width/2 - 400) && (mouseX < width/2 + 400)
+  && (mouseY > height/2 - 400) && (mouseY < height/2 + 400)){
+       mouseDeltaX=mouseX-pmouseX;
+       mouseDeltaY=mouseY-pmouseY;
+}
+}
 
-//public void field1(String theText) {
-//  // receiving text from controller texting
-//  if (float(theText) > 0 && float(theText) <1){
-//  theta1Incr = float(theText);
-//  }
-//  controlP5.controller("theta1Incr").setValue(theta1Incr);
+//void mouseReleased(){
+//       mouseDeltaX=0;
+//       mouseDeltaY=0;
 //}
 
-//public void field2(String theText) {
-//  // receiving text from controller texting
-//  if (float(theText) > 0 && float(theText) <1){
-//  theta2Incr = float(theText);
-//  }
-//  controlP5.controller("theta2Incr").setValue(theta2Incr);
-//}
+void decrementRotation(){
+  if (mouseX-pmouseX == 0 && abs(mouseDeltaX) > 0){
+    mouseDeltaX /= 2;
+  }
+    if (mouseY-pmouseY == 0 && abs(mouseDeltaY) > 0){
+    mouseDeltaY /= 2;
+  }
+  
+}
 
-//public void field3(String theText) {
-//  // receiving text from controller texting
-//  if (float(theText) > 0 && float(theText) <1){
-//  theta3Incr = float(theText);
-//  }
-//  controlP5.controller("theta3Incr").setValue(theta3Incr);
-//}
+
+
+
+
+//for checkboxes
+void controlEvent(ControlEvent theEvent) {
+  if (theEvent.isFrom(checkBox)) {
+      shouldRotate = (int)checkBox.getArrayValue()[0];
+      detuneB = (int)checkBox.getArrayValue()[1];
+      detuneC = (int)checkBox.getArrayValue()[2];
+  }
+}
