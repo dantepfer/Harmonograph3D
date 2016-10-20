@@ -14,6 +14,7 @@ float rotTheta=10;
 
 float baseFreq = 440.0;
 
+CheckBox checkBox;
 
 float theta1 = 0;  
 float theta2 = 0;
@@ -21,9 +22,9 @@ float theta3 = 0;
 public float theta1Incr = .1;
 public float theta2Incr = .15;
 public float theta3Incr = .2;
-public int iterations = 4000;
+public int iterations = 20;
 
-int scaleFactor = 400;
+int scaleFactor = 100;
 PFont myFont;
 
 SinOsc[] sine = new SinOsc[3];
@@ -39,11 +40,59 @@ void setup() {
   
   cp5 = new ControlP5(this);
   
-    cp5.addSlider("theta1Incr")
-     .setPosition(100,50)
-     .setRange(.01,.2)
-     ;
+ cp5.addSlider("theta1Incr")
+    .setPosition(20,50)
+    .setRange(.1,2)
+    .setSize(20,300)
+    .setNumberOfTickMarks(20)
+    .showTickMarks(false)
+    .setColorCaptionLabel(0) 
+    .setCaptionLabel("   a") 
+  ;
+  
+    cp5.addSlider("theta2Incr")
+     .setPosition(50,50)
+     .setRange(.1,2)
+     .setSize(20,300)
+     .setNumberOfTickMarks(20)
+     .showTickMarks(false)
+     .setColorCaptionLabel(0) 
+    .setCaptionLabel("   b") 
+  ;
+  
+    cp5.addSlider("theta3Incr")
+     .setPosition(80,50)
+     .setRange(.1,2)
+     .setSize(20,300)
+     .setNumberOfTickMarks(20)
+     .showTickMarks(false)
+     .setColorCaptionLabel(0) 
+     .setCaptionLabel("   c") 
+  ;
+  
+    cp5.addSlider("iterations")
+     .setPosition(width-50,50)
+     .setRange(1,50000)
+     .setSize(20, height -100)
+  ;
 
+
+checkBox = cp5.addCheckBox("checkBox")
+                .setPosition(20, 400)
+                .setSize(20, 20)
+                .setItemsPerRow(1)
+                .setSpacingColumn(40)
+                .setSpacingRow(10)
+                .addItem("rotate", 1)
+                .addItem("detuneB", 0)
+                .addItem("detuneC", 0)
+                .setColorLabels(0)
+       ;
+       
+       //if(shouldRotate==1){
+       //  checkBox.toggle(0);
+       //}
+         
   
   //controlP5 = new ControlP5(this);
   // controlP5.setAutoDraw(false);
@@ -102,7 +151,7 @@ void draw() {
   background(255);
   stroke(0);
   
- // theta3Incr -= .0000005;
+  theta3Incr -= .000015;
 //  theta2Incr += .0000005;
   
   
@@ -122,12 +171,8 @@ void draw() {
     rotTheta = rotTheta+.01;
   }
   
-  textFont(myFont); 
-  fill(0);
-  textMode(MODEL);
-  text("a:"+str(theta1Incr)+"    b:"+str(theta2Incr)+"    c:"+str(theta3Incr),20,20);
   
-  for (int i=0; i<iterations; i++){
+    for (int i=0; i<iterations; i++){
  //if (mycheckbox.arrayValue()[0] == 1) {rotateX(theta1Incr/16);}
  //if (mycheckbox.arrayValue()[1] == 1) {rotateY(theta1Incr/16);}
  //if (mycheckbox.arrayValue()[2] == 1) {rotateZ(theta1Incr/16);}
@@ -136,8 +181,17 @@ void draw() {
     line(sin(theta1+i*theta1Incr), cos(theta2+i*theta2Incr), cos(theta3+i*theta3Incr), sin(theta1+(i+1)*theta1Incr), cos(theta2+(i+1)*theta2Incr), cos(theta3+(i+1)*theta3Incr));
   }
   
+  camera();
+  
+  textFont(myFont); 
+  fill(0);
+  textMode(MODEL);
+  text("a:"+str(theta1Incr)+"    b:"+str(theta2Incr)+"    c:"+str(theta3Incr),20,20);
+  
 
-  //controlP5.draw();
+  
+
+  cp5.draw();
   
   sine[0].freq(baseFreq);
     sine[1].freq(baseFreq*theta2Incr/theta1Incr);
