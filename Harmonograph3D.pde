@@ -32,8 +32,7 @@ float detuneAmountPerFrame3 = -0.00001;
 float mouseDeltaX=0;
 float mouseDeltaY=0;
 
-int scaleFactor = 1;
-int scaleFactor2 = 400;
+int scaleFactor = 400;
 PFont myFont;
 CheckBox checkBox;
 
@@ -52,11 +51,13 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.setAutoDraw(false);
   
+  
+  //this is cool when number of ticks is not same as interval — eg 20 ticks when range is 1,21 — so that it's all a little out of tune
   cp5.addSlider("theta1Incr")
     .setPosition(20,50)
-    .setRange(1,20)
+    .setRange(1,21)
     .setSize(20,300)
-    .setNumberOfTickMarks(20)
+    .setNumberOfTickMarks(21)
     .showTickMarks(false)
     .setColorCaptionLabel(0) 
     .setCaptionLabel("   a") 
@@ -64,9 +65,9 @@ void setup() {
   
     cp5.addSlider("theta2Incr")
      .setPosition(50,50)
-     .setRange(1,20)
+     .setRange(1,21)
      .setSize(20,300)
-     .setNumberOfTickMarks(20)
+     .setNumberOfTickMarks(21)
      .showTickMarks(false)
      .setColorCaptionLabel(0) 
     .setCaptionLabel("   b") 
@@ -74,9 +75,9 @@ void setup() {
   
     cp5.addSlider("theta3Incr")
      .setPosition(80,50)
-     .setRange(1,20)
+     .setRange(1,21)
      .setSize(20,300)
-     .setNumberOfTickMarks(20)
+     .setNumberOfTickMarks(21)
      .showTickMarks(false)
      .setColorCaptionLabel(0) 
      .setCaptionLabel("   c") 
@@ -108,9 +109,10 @@ checkBox = cp5.addCheckBox("checkBox")
   for (int i = 0; i<3; i++){
      sine[i] = new SinOsc(this);
   }
-  sine[0].set(baseFreq, 0.5, 0, 0.5);
-  sine[1].set(baseFreq*theta2Incr/theta1Incr, 0.5, 0, 0.5);
-  sine[2].set(baseFreq*theta3Incr/theta1Incr, 0.5, 0, 0.5);
+  //.set(freq, amp, add, pos)
+  sine[0].set(baseFreq, 0.2, 0, 0);
+  sine[1].set(baseFreq*theta2Incr/theta1Incr, 0.2, 0, 0);
+  sine[2].set(baseFreq*theta3Incr/theta1Incr, 0.2, 0, 0);
   
     for (int i = 0; i<3; i++){
      sine[i].play();
@@ -141,7 +143,6 @@ void draw() {
          0.0, 1.0, 0.0); // upX, upY, upZ
          
   translate(width/2, height/2, 0);
-   scale (scaleFactor);
             
   decrementRotation();
   rotThetaY += mouseDeltaX/100.0;
@@ -160,7 +161,7 @@ void draw() {
     sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(i+1)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(i+1)*theta3Incr*thetaScaleFactor)*scaleFactor);
   }
   
-  camera(); //anthing after this is rendered in 2D
+  camera(); //anything after this is rendered in 2D
   
   textFont(myFont); 
   fill(0);
