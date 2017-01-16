@@ -1,6 +1,8 @@
 //press P to output 3D obj
 //add aug (16/20/25) and dim (5/6/7) triads, both natural and equal tempered
 
+//cool thing is 17:19:21 and move the 17 around to 18 and 16 — nice progression
+
 import processing.sound.*;
 import nervoussystem.obj.*; //for outputing 3D file
 boolean recordObj = false;
@@ -14,7 +16,7 @@ PVector camDir, camPos;
 float camRotY=-PI; //camera azimuth angle
 float camRotX=0; //camera elevation angle
 float rotationSpeed = 0.01;
-int shouldRotate = 0;
+int shouldRotate = 1;
 
 float rotThetaY=10;
 float rotThetaX=0;
@@ -24,11 +26,15 @@ float baseFreq = 220.0;
 float theta1 = 0;  
 float theta2 = 0;
 float theta3 = 0;
-public float theta1Incr = 4;
-public float theta2Incr = 5;
-public float theta3Incr = 6;
-float thetaScaleFactor = 0.005;
-public int iterations = 35000;
+public float theta1Incr = 4.0;
+public float theta2Incr = 5.0;
+public float theta3Incr = 6.0;
+public float thetaScaleFactorMultiplier = 0.005;
+int iterations = 35000;
+int maxIterations = 140000;
+int minIterations = 20;
+float logSlope = 100;
+public float iterationsLog = log(iterations) - logSlope;
 int detuneB = 0;
 int detuneC = 0;
 float detuneAmountPerFrame2 = 0.00001;
@@ -41,9 +47,13 @@ float twelthRootOfTwo = 1.05946309436;
 int scaleFactor = 400;
 PFont myFont;
 CheckBox checkBox;
+Slider iterationSlider;
 
 int mySlowCounter = 1;
 int cameraFollowsTraveller = 0;
+int travellerOn = 1;
+PVector travellerModelOrig = new PVector(0,0,0);
+PVector travellerModelDest = new PVector(0,0,0);
 
 SinOsc[] sine = new SinOsc[3];
 
@@ -101,37 +111,43 @@ checkBox = cp5.addCheckBox("checkBox")
                 .setItemsPerRow(1)
                 .setSpacingColumn(40)
                 .setSpacingRow(10)
-                .addItem("rotate", 1)
+                .addItem("rotate", 0)
                 .addItem("detuneB", 0)
                 .addItem("detuneC", 0)
-                .addItem("follow",0)
+                .addItem("follow traveller",0)
+                .addItem("traveller",0)
                 .setColorLabels(0)
        ;
        
-       if(shouldRotate==1){
-         checkBox.toggle(0);
-       }
-         
-
-  cp5.addSlider("iterations")
+ iterationSlider = cp5.addSlider("iterationsLog")
      .setPosition(width-50,50)
-     .setRange(1,50000)
+     .setRange(log(minIterations)-logSlope,log(maxIterations)-logSlope)
      .setSize(20, height -100)
+     .setColorCaptionLabel(0)
+     .setCaptionLabel(" ITER") 
+  ;
+  
+ cp5.addSlider("thetaScaleFactorMultiplier")
+     .setPosition(width-80,50)
+     .setRange(0.001, 0.1)
+     .setSize(20, 300)
+     .setColorCaptionLabel(0)
+     .setCaptionLabel("DETAIL") 
   ;
   
   cp5.addButton("Natural_Major_Triad")
      .setValue(0)
-     .setPosition(20,500)
+     .setPosition(20,620)
      .setSize(200,19)
      ;
      
   cp5.addButton("Equal_Tempered_Major_Triad")
      .setValue(0)
-     .setPosition(20,530)
+     .setPosition(20,650)
      .setSize(200,19)
      ;
      
-       cp5.addButton("Natural_Minor_Triad")
+  cp5.addButton("Natural_Minor_Triad")
      .setValue(0)
      .setPosition(20,560)
      .setSize(200,19)
@@ -143,6 +159,15 @@ checkBox = cp5.addCheckBox("checkBox")
      .setSize(200,19)
      ;
   
+       if(travellerOn==1){
+         checkBox.toggle(4);
+         println("HELLO!");
+       }
+       
+       if(shouldRotate==1){
+         checkBox.toggle(0);
+         println("HELLO!!!!!");
+       }
   
      
   for (int i = 0; i<3; i++){
@@ -173,18 +198,29 @@ void draw() {
     theta3Incr += detuneAmountPerFrame3;
   }
    
-   checkCameraInput();
-   
     int j = mySlowCounter;
+    float thetaScaleFactor = 5/((theta1Incr+theta2Incr+theta3Incr)/3.0) * thetaScaleFactorMultiplier;
     PVector origin = new PVector(sin(theta1+j*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+j*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+j*theta3Incr*thetaScaleFactor)*scaleFactor);
-    PVector destination = new PVector(sin(theta1+(j+1)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(j+1)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(j+1)*theta3Incr*thetaScaleFactor)*scaleFactor);
+    PVector destination = new PVector(sin(theta1+(j+2)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(j+2)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(j+2)*theta3Incr*thetaScaleFactor)*scaleFactor);
+    PVector camDirTemp=camDir;
+    PVector camPosTemp=camPos;
     if (cameraFollowsTraveller==1){
-      camPos = origin;
-      camDir = PVector.sub(destination, origin);
+      camDirTemp = PVector.sub(travellerModelDest, travellerModelOrig);
+      camPosTemp = travellerModelOrig;
+      float fov = PI/3.0;
+      float cameraZ = (height/2.0) / tan(fov/2.0);
+      perspective(fov, float(width)/float(height), 
+                  cameraZ/100.0, cameraZ*10.0);
+    }else{
+      perspective(); //resets it
+      checkCameraInput();
+      camDirTemp=camDir;
+      camPosTemp=camPos;
+      
     }
    
-   camera(camPos.x, camPos.y, camPos.z, // eyeX, eyeY, eyeZ
-         camPos.x+camDir.x,camPos.y+camDir.y,camPos.z+camDir.z, // centerX, centerY, centerZ
+     camera(camPosTemp.x, camPosTemp.y, camPosTemp.z, // eyeX, eyeY, eyeZ
+         camPosTemp.x+camDirTemp.x,camPosTemp.y+camDirTemp.y,camPosTemp.z+camDirTemp.z, // centerX, centerY, centerZ (where we are looking)
          0.0, 1.0, 0.0); // upX, upY, upZ
          
   translate(width/2, height/2, 0);
@@ -216,12 +252,21 @@ void draw() {
     recordObj = false;
   }
   
-  
- strokeWeight(8);
+  //traveller guy
+  if (travellerOn==1){
+    strokeWeight(8);
     line(origin.x, origin.y, origin.z, destination.x, destination.y, destination.z);
-   
+  }
     
-    mySlowCounter = mySlowCounter + 2;
+    //save transformed coordinates for use by the camera in the next iteration
+   travellerModelOrig.x = modelX(origin.x,origin.y,origin.z);
+   travellerModelOrig.y = modelY(origin.x,origin.y,origin.z);
+   travellerModelOrig.z = modelZ(origin.x,origin.y,origin.z);
+   travellerModelDest.x = modelX(destination.x,destination.y,destination.z);
+   travellerModelDest.y = modelY(destination.x,destination.y,destination.z);
+   travellerModelDest.z = modelZ(destination.x,destination.y,destination.z);
+
+    mySlowCounter = mySlowCounter + 1;
     if (mySlowCounter > iterations){
       mySlowCounter = 1;
     }
@@ -233,6 +278,10 @@ void draw() {
   textFont(myFont); 
   fill(0);
   text("a:"+str(theta1Incr)+"    b:"+str(theta2Incr)+"    c:"+str(theta3Incr),20,20);
+  
+    //text("camposX:"+str(camPos.x)+"    camposY:"+str(camPos.y)+"    camposZ:"+str(camPos.z),800,20);
+    //text("travelX:"+str(origin.x)+"    travelY:"+str(origin.y)+"    travelZ:"+str(origin.z),800,40);
+    
   
   cp5.draw();
   
@@ -303,7 +352,13 @@ void controlEvent(ControlEvent theEvent) {
       detuneB = (int)checkBox.getArrayValue()[1];
       detuneC = (int)checkBox.getArrayValue()[2];
       cameraFollowsTraveller = (int)checkBox.getArrayValue()[3];
+      travellerOn = (int)checkBox.getArrayValue()[4];
   }
+    if (theEvent.isFrom(iterationSlider)) {
+      iterations = int(exp(iterationsLog+logSlope));
+  }
+  
+  
 }
 
 public void Natural_Major_Triad(int theValue) {
