@@ -55,6 +55,9 @@ int travellerOn = 1;
 PVector travellerModelOrig = new PVector(0,0,0);
 PVector travellerModelDest = new PVector(0,0,0);
 
+public float phaseB = 0;
+public float phaseC = 0;
+
 SinOsc[] sine = new SinOsc[3];
 
 void setup() {
@@ -129,10 +132,25 @@ checkBox = cp5.addCheckBox("checkBox")
   
  cp5.addSlider("thetaScaleFactorMultiplier")
      .setPosition(width-80,50)
-     .setRange(0.001, 0.1)
+     .setRange(0.001, 0.25)
      .setSize(20, 300)
      .setColorCaptionLabel(0)
      .setCaptionLabel("DETAIL") 
+  ;
+  
+ cp5.addSlider("phaseB")
+     .setPosition(20,690)
+     .setRange(0, PI/2)
+     .setSize(20, 150)
+     .setColorCaptionLabel(0)
+     .setCaptionLabel("PhaseB") 
+  ;
+  cp5.addSlider("phaseC")
+     .setPosition(50,690)
+     .setRange(0, PI/2)
+     .setSize(20, 150)
+     .setColorCaptionLabel(0)
+     .setCaptionLabel("PhaseC") 
   ;
   
   cp5.addButton("Natural_Major_Triad")
@@ -200,8 +218,8 @@ void draw() {
    
     int j = mySlowCounter;
     float thetaScaleFactor = 5/((theta1Incr+theta2Incr+theta3Incr)/3.0) * thetaScaleFactorMultiplier;
-    PVector origin = new PVector(sin(theta1+j*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+j*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+j*theta3Incr*thetaScaleFactor)*scaleFactor);
-    PVector destination = new PVector(sin(theta1+(j+2)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(j+2)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(j+2)*theta3Incr*thetaScaleFactor)*scaleFactor);
+    PVector origin = new PVector(sin(theta1+j*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+j*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+j*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
+    PVector destination = new PVector(sin(theta1+(j+2)*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+(j+2)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+(j+2)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
     PVector camDirTemp=camDir;
     PVector camPosTemp=camPos;
     if (cameraFollowsTraveller==1){
@@ -243,8 +261,8 @@ void draw() {
 
     for (int i=0; i<iterations; i++){
     strokeWeight(0.5);
-    line(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+i*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+i*theta3Incr*thetaScaleFactor)*scaleFactor,
-    sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, cos(theta2+(i+1)*theta2Incr*thetaScaleFactor)*scaleFactor, cos(theta3+(i+1)*theta3Incr*thetaScaleFactor)*scaleFactor);
+    line(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+i*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+i*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor,
+    sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+(i+1)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+(i+1)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
     }
     
   if (recordObj) {
