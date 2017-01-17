@@ -54,6 +54,7 @@ int cameraFollowsTraveller = 0;
 int travellerOn = 1;
 PVector travellerModelOrig = new PVector(0,0,0);
 PVector travellerModelDest = new PVector(0,0,0);
+int travellerLength = 2; //at least 2!
 
 public float phaseB = 0;
 public float phaseC = 0;
@@ -218,8 +219,12 @@ void draw() {
    
     int j = mySlowCounter;
     float thetaScaleFactor = 5/((theta1Incr+theta2Incr+theta3Incr)/3.0) * thetaScaleFactorMultiplier;
-    PVector origin = new PVector(sin(theta1+j*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+j*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+j*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
-    PVector destination = new PVector(sin(theta1+(j+2)*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+(j+2)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+(j+2)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
+    PVector[] travellerCoords = new PVector[travellerLength];
+    for (int i = 0; i<travellerLength; i++){ 
+      travellerCoords[i] = new PVector(sin(theta1+(j+i*2)*theta1Incr*thetaScaleFactor)*scaleFactor, 
+        sin(theta2+(j+i*2)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, 
+        sin(theta3+(j+i*2)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
+    }
     PVector camDirTemp=camDir;
     PVector camPosTemp=camPos;
     if (cameraFollowsTraveller==1){
@@ -273,16 +278,18 @@ void draw() {
   //traveller guy
   if (travellerOn==1){
     strokeWeight(8);
-    line(origin.x, origin.y, origin.z, destination.x, destination.y, destination.z);
+    for (int i = 0; i<travellerLength-1; i++){
+    line(travellerCoords[i].x, travellerCoords[i].y, travellerCoords[i].z, travellerCoords[i+1].x, travellerCoords[i+1].y, travellerCoords[i+1].z);
+    }
   }
     
     //save transformed coordinates for use by the camera in the next iteration
-   travellerModelOrig.x = modelX(origin.x,origin.y,origin.z);
-   travellerModelOrig.y = modelY(origin.x,origin.y,origin.z);
-   travellerModelOrig.z = modelZ(origin.x,origin.y,origin.z);
-   travellerModelDest.x = modelX(destination.x,destination.y,destination.z);
-   travellerModelDest.y = modelY(destination.x,destination.y,destination.z);
-   travellerModelDest.z = modelZ(destination.x,destination.y,destination.z);
+   travellerModelOrig.x = modelX(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
+   travellerModelOrig.y = modelY(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
+   travellerModelOrig.z = modelZ(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
+   travellerModelDest.x = modelX(travellerCoords[travellerLength-1].x,travellerCoords[travellerLength-1].y,travellerCoords[travellerLength-1].z);
+   travellerModelDest.y = modelY(travellerCoords[travellerLength-1].x,travellerCoords[travellerLength-1].y,travellerCoords[travellerLength-1].z);
+   travellerModelDest.z = modelZ(travellerCoords[travellerLength-1].x,travellerCoords[travellerLength-1].y,travellerCoords[travellerLength-1].z);
 
     mySlowCounter = mySlowCounter + 1;
     if (mySlowCounter > iterations){
