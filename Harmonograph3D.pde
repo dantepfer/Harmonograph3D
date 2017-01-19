@@ -18,7 +18,7 @@ float camRotX=0; //camera elevation angle
 float rotationSpeed = 0.01;
 int shouldRotate = 1;
 
-float rotThetaY=10;
+float rotThetaY=0;
 float rotThetaX=0;
 
 float baseFreq = 220.0;
@@ -55,6 +55,8 @@ int travellerOn = 1;
 PVector travellerModelOrig = new PVector(0,0,0);
 PVector travellerModelDest = new PVector(0,0,0);
 int travellerLength = 2; //at least 2!
+
+int showAxes = 1;
 
 public float phaseB = 0;
 public float phaseC = 0;
@@ -120,6 +122,7 @@ checkBox = cp5.addCheckBox("checkBox")
                 .addItem("detuneC", 0)
                 .addItem("follow traveller",0)
                 .addItem("traveller",0)
+                .addItem("show axes",0)
                 .setColorLabels(0)
        ;
        
@@ -140,41 +143,41 @@ checkBox = cp5.addCheckBox("checkBox")
   ;
   
  cp5.addSlider("phaseB")
-     .setPosition(20,690)
+     .setPosition(20,700)
      .setRange(0, PI/2)
-     .setSize(20, 150)
+     .setSize(20, 140)
      .setColorCaptionLabel(0)
      .setCaptionLabel("PhaseB") 
   ;
   cp5.addSlider("phaseC")
-     .setPosition(50,690)
+     .setPosition(50,700)
      .setRange(0, PI/2)
-     .setSize(20, 150)
+     .setSize(20, 140)
      .setColorCaptionLabel(0)
      .setCaptionLabel("PhaseC") 
   ;
   
   cp5.addButton("Natural_Major_Triad")
      .setValue(0)
-     .setPosition(20,620)
+     .setPosition(20,640)
      .setSize(200,19)
      ;
      
   cp5.addButton("Equal_Tempered_Major_Triad")
      .setValue(0)
-     .setPosition(20,650)
+     .setPosition(20,670)
      .setSize(200,19)
      ;
      
   cp5.addButton("Natural_Minor_Triad")
      .setValue(0)
-     .setPosition(20,560)
+     .setPosition(20,580)
      .setSize(200,19)
      ;
      
   cp5.addButton("Equal_Tempered_Minor_Triad")
      .setValue(0)
-     .setPosition(20,590)
+     .setPosition(20,610)
      .setSize(200,19)
      ;
   
@@ -239,7 +242,10 @@ void draw() {
       checkCameraInput();
       camDirTemp=camDir;
       camPosTemp=camPos;
-      
+      float fov = PI/3.0;
+      float cameraZ = (height/2.0) / tan(fov/2.0);
+      perspective(fov, float(width)/float(height), 
+                  cameraZ/100.0, cameraZ*100.0);
     }
    
      camera(camPosTemp.x, camPosTemp.y, camPosTemp.z, // eyeX, eyeY, eyeZ
@@ -258,6 +264,35 @@ void draw() {
   
   rotateX(rotThetaX);
   rotateY(rotThetaY);
+  
+  //AXES
+  if (showAxes == 1){
+    float axesLength = 1.0;
+    int axesAlpha = 100;
+    stroke(255,0,0,axesAlpha);
+    strokeWeight(4);
+    line(scaleFactor,scaleFactor,scaleFactor,-axesLength*scaleFactor,scaleFactor,scaleFactor);
+    line(scaleFactor,scaleFactor,scaleFactor,scaleFactor,-axesLength*scaleFactor,scaleFactor);
+    line(scaleFactor,scaleFactor,scaleFactor,scaleFactor,scaleFactor,-axesLength*scaleFactor);
+    textSize(32);
+    fill(255, 0, 0, axesAlpha);
+    text("A: "+str(theta1Incr),-axesLength*scaleFactor,scaleFactor,scaleFactor);
+    text("B: "+str(theta2Incr),scaleFactor,-axesLength*scaleFactor,scaleFactor);
+    text("C: "+str(theta3Incr),scaleFactor,scaleFactor,-axesLength*scaleFactor);
+    fill(255, 0, 0,axesAlpha);
+    pushMatrix();
+    translate(travellerCoords[0].x,scaleFactor,scaleFactor);
+    sphere(5);
+    popMatrix();
+    pushMatrix();
+    translate(scaleFactor,travellerCoords[0].y,scaleFactor);
+    sphere(5);
+    popMatrix();
+    pushMatrix();
+    translate(scaleFactor,scaleFactor,travellerCoords[0].z);
+    sphere(5);
+    popMatrix();
+  }
 
   if (recordObj) {
     beginRecord("nervoussystem.obj.OBJExport", "Harmonograph3DExport.obj"); 
@@ -265,6 +300,7 @@ void draw() {
   
 
     for (int i=0; i<iterations; i++){
+    stroke(0,255);
     strokeWeight(0.5);
     line(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+i*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+i*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor,
     sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+(i+1)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+(i+1)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
@@ -378,6 +414,7 @@ void controlEvent(ControlEvent theEvent) {
       detuneC = (int)checkBox.getArrayValue()[2];
       cameraFollowsTraveller = (int)checkBox.getArrayValue()[3];
       travellerOn = (int)checkBox.getArrayValue()[4];
+      showAxes = (int)checkBox.getArrayValue()[5];
   }
     if (theEvent.isFrom(iterationSlider)) {
       iterations = int(exp(iterationsLog+logSlope));
