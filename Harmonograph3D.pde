@@ -15,7 +15,7 @@ float rotIncr = .1;
 PVector camDir, camPos; 
 float camRotY=-PI; //camera azimuth angle
 float camRotX=0; //camera elevation angle
-float rotationSpeed = 0.01;
+float rotationSpeed = 0.008;
 int shouldRotate = 1;
 
 float rotThetaY=0;
@@ -55,6 +55,7 @@ int travellerOn = 1;
 PVector travellerModelOrig = new PVector(0,0,0);
 PVector travellerModelDest = new PVector(0,0,0);
 int travellerLength = 2; //at least 2!
+float travellerSpeed = 0.0013;
 
 int showAxes = 1;
 
@@ -65,8 +66,8 @@ SinOsc[] sine = new SinOsc[3];
 
 void setup() {
   //size(1400, 800, P3D);
-  fullScreen(P3D);
-  pixelDensity(2);
+  fullScreen(P3D,1);
+  pixelDensity(displayDensity());
   smooth();
   
   frameRate(64);
@@ -224,9 +225,9 @@ void draw() {
     float thetaScaleFactor = 5/((theta1Incr+theta2Incr+theta3Incr)/3.0) * thetaScaleFactorMultiplier;
     PVector[] travellerCoords = new PVector[travellerLength];
     for (int i = 0; i<travellerLength; i++){ 
-      travellerCoords[i] = new PVector(sin(theta1+(j+i*2)*theta1Incr*thetaScaleFactor)*scaleFactor, 
-        sin(theta2+(j+i*2)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, 
-        sin(theta3+(j+i*2)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
+      travellerCoords[i] = new PVector(sin(theta1+(j+i*2)*theta1Incr*travellerSpeed)*scaleFactor, 
+        sin(theta2+(j+i*2)*theta2Incr*travellerSpeed+phaseB)*scaleFactor, 
+        sin(theta3+(j+i*2)*theta3Incr*travellerSpeed+phaseC)*scaleFactor);
     }
     PVector camDirTemp=camDir;
     PVector camPosTemp=camPos;
@@ -298,14 +299,17 @@ void draw() {
     beginRecord("nervoussystem.obj.OBJExport", "Harmonograph3DExport.obj"); 
   }  
   
+noFill();
+beginShape();
 
     for (int i=0; i<iterations; i++){
     stroke(0,255);
     strokeWeight(0.5);
-    line(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+i*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+i*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor,
-    sin(theta1+(i+1)*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+(i+1)*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+(i+1)*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
+    vertex(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+i*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+i*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
     }
     
+endShape();
+
   if (recordObj) {
     endRecord();
     recordObj = false;
