@@ -3,12 +3,15 @@
 
 //cool thing is 17:19:21 and move the 17 around to 18 and 16 — nice progression
 
+import processing.pdf.*; //for outputting PDF
 import processing.sound.*;
 import nervoussystem.obj.*; //for outputing 3D file
 boolean recordObj = false;
 import controlP5.*;
 
 ControlP5 cp5;
+PGraphicsPDF pdf;
+boolean recordPDF = false;
 
 float camSpeed = 50;
 float rotIncr = .1;
@@ -211,6 +214,11 @@ checkBox = cp5.addCheckBox("checkBox")
 
 void draw() {
 
+  if (recordPDF) {
+    pdf = (PGraphicsPDF) createGraphics(width*2, height*2, PDF, "PDFs/Triad "+str(hour())+str(minute())+str(second())+" A="+str(theta1Incr)+" B="+str(theta2Incr)+" C="+str(theta3Incr)+".pdf");
+    beginRaw(pdf); 
+  }
+  
   background(255);
   stroke(0);
   
@@ -299,21 +307,19 @@ void draw() {
     beginRecord("nervoussystem.obj.OBJExport", "Harmonograph3DExport.obj"); 
   }  
   
-noFill();
-beginShape();
+  noFill();
+  beginShape();
 
-    for (int i=0; i<iterations; i++){
-    stroke(0,255);
-    strokeWeight(0.5);
+  stroke(0,255);
+  strokeWeight(0.5);
+
+  for (int i=0; i<iterations; i++){
     vertex(sin(theta1+i*theta1Incr*thetaScaleFactor)*scaleFactor, sin(theta2+i*theta2Incr*thetaScaleFactor+phaseB)*scaleFactor, sin(theta3+i*theta3Incr*thetaScaleFactor+phaseC)*scaleFactor);
-    }
+  }
     
 endShape();
 
-  if (recordObj) {
-    endRecord();
-    recordObj = false;
-  }
+  if(recordObj) {endRecord(); recordObj = false;}
   
   //traveller guy
   if (travellerOn==1){
@@ -323,7 +329,7 @@ endShape();
     }
   }
     
-    //save transformed coordinates for use by the camera in the next iteration
+  //save transformed coordinates for use by the camera in the next iteration
    travellerModelOrig.x = modelX(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
    travellerModelOrig.y = modelY(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
    travellerModelOrig.z = modelZ(travellerCoords[0].x,travellerCoords[0].y,travellerCoords[0].z);
@@ -331,12 +337,12 @@ endShape();
    travellerModelDest.y = modelY(travellerCoords[travellerLength-1].x,travellerCoords[travellerLength-1].y,travellerCoords[travellerLength-1].z);
    travellerModelDest.z = modelZ(travellerCoords[travellerLength-1].x,travellerCoords[travellerLength-1].y,travellerCoords[travellerLength-1].z);
 
-    mySlowCounter = mySlowCounter + 1;
-    if (mySlowCounter > iterations){
+  mySlowCounter = mySlowCounter + 1;
+  if (mySlowCounter > iterations){
       mySlowCounter = 1;
-    }
-  
-
+  }
+    
+  if(recordPDF){recordPDF=false; endRaw();}
   
   camera(); //anything after this is rendered in 2D
   
@@ -352,6 +358,8 @@ endShape();
   
   sine[1].freq(baseFreq*theta2Incr/theta1Incr);
   sine[2].freq(baseFreq*theta3Incr/theta1Incr);
+  
+
 }
 
 void checkCameraInput() {
@@ -393,6 +401,9 @@ void keyPressed() {
   if (key == 'p') {
     recordObj = true; //output 3D obj
   } 
+  if (key == 's') {
+    recordPDF = true; //output PDF
+  } 
 }
 
 //void mouseReleased(){
@@ -410,7 +421,7 @@ void decrementRotation(){
   
 }
 
-//for checkboxes
+//for checkboxes and slider
 void controlEvent(ControlEvent theEvent) {
   if (theEvent.isFrom(checkBox)) {
       shouldRotate = (int)checkBox.getArrayValue()[0];
